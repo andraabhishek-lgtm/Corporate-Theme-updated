@@ -529,6 +529,16 @@ function setupServiceFilters() {
   });
 
   if (search) search.addEventListener("input", apply);
+
+  const heroForm = search ? search.closest("form") : null;
+  if (heroForm) {
+    heroForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      apply();
+      const catalog = document.getElementById("serviceCatalog");
+      if (catalog) catalog.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 }
 
 function setupPortfolioFilters() {
