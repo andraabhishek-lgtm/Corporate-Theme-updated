@@ -584,20 +584,32 @@ function setupBlogFilters() {
 
   const cards = Array.from(grid.querySelectorAll(".blog-card"));
   const search = document.getElementById("blogSearch");
-  const searchInline = document.getElementById("blogSearchInline");
   const buttons = document.querySelectorAll(".filter-btn[data-filter]");
   const sort = document.getElementById("blogSort");
   let activeFilter = "all";
 
+  let emptyMsg = grid.querySelector(".blog-no-results");
+  if (!emptyMsg) {
+    emptyMsg = document.createElement("p");
+    emptyMsg.className = "blog-no-results";
+    emptyMsg.textContent = "No articles match your search.";
+    emptyMsg.style.cssText = "display:none;grid-column:1/-1;text-align:center;padding:2rem;color:var(--color-muted,#888);";
+    grid.appendChild(emptyMsg);
+  }
+
   const apply = () => {
-    const query = (search ? search.value.trim() : searchInline ? searchInline.value.trim() : "").toLowerCase();
+    const query = search ? search.value.trim().toLowerCase() : "";
+    let visible = 0;
     cards.forEach((card) => {
       const category = card.dataset.category;
       const text = `${card.textContent} ${card.dataset.keywords || ""}`.toLowerCase();
       const matchesFilter = activeFilter === "all" || category === activeFilter;
       const matchesQuery = !query || text.includes(query);
-      card.classList.toggle("hidden-by-filter", !(matchesFilter && matchesQuery));
+      const show = matchesFilter && matchesQuery;
+      card.classList.toggle("hidden-by-filter", !show);
+      if (show) visible++;
     });
+    emptyMsg.style.display = visible === 0 ? "block" : "none";
   };
 
   buttons.forEach((button) => {
@@ -608,14 +620,16 @@ function setupBlogFilters() {
     });
   });
 
-  if (search) search.addEventListener("input", () => {
-    if (searchInline) searchInline.value = search.value;
-    apply();
-  });
-  if (searchInline) searchInline.addEventListener("input", () => {
-    if (search) search.value = searchInline.value;
-    apply();
-  });
+  if (search) search.addEventListener("input", apply);
+
+  const heroForm = search ? search.closest("form") : null;
+  if (heroForm) {
+    heroForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      apply();
+      grid.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 
   if (sort) {
     sort.addEventListener("change", () => {
